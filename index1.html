@@ -1,0 +1,999 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Умный планировщик подготовки — Sevinch Fatilloyeva</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,500;0,600;1,500;1,600&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --p: #7B4B2A;      /* Рассет */
+    --d: #3F2412;      /* Эспрессо */
+    --a: #E0A94A;      /* Золотой */
+    --at: #8A5A12;     /* Охра */
+    --bg: #FFFFFF;     /* Белый */
+    --soft: #FAF6F1;   /* Тёплый кремовый оттенок */
+    --ink: #2B1B10;    /* Горький шоколад */
+    --mu: #7A6652;     /* Мокко */
+    --line: rgba(123, 75, 42, 0.28);
+    --ok: #2E6F40;
+    --warn: #A85A18;
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    margin: 0;
+    background: #F4EFEA;
+    color: var(--ink);
+    font: 15px/1.6 'Inter', system-ui, -apple-system, sans-serif;
+    padding: 18px 12px 48px;
+  }
+
+  .sheet {
+    max-width: 1040px;
+    margin: 0 auto;
+    background: var(--bg);
+    box-shadow: 0 14px 40px rgba(63, 36, 18, 0.08);
+    padding: 12px;
+  }
+
+  .strip {
+    height: 36px;
+    position: relative;
+    margin: -12px -12px 18px;
+    background: var(--d);
+    overflow: hidden;
+  }
+  .strip svg { position: absolute; inset: 0; width: 100%; height: 100%; }
+
+  .frame {
+    border: 1px solid var(--p);
+    outline: 1px solid var(--p);
+    outline-offset: 5px;
+    margin: 6px;
+    padding: clamp(18px, 4vw, 44px) clamp(14px, 3.5vw, 40px);
+  }
+
+  /* Шапка */
+  .topbar {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    align-items: center;
+    gap: 12px;
+    padding-bottom: 16px;
+    border-bottom: 1px solid var(--line);
+  }
+
+  .brand {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    text-decoration: none;
+    color: inherit;
+  }
+  .brand svg { width: 42px; height: 42px; flex-shrink: 0; }
+  .brand-title {
+    font: italic 600 22px/1.1 'Playfair Display', serif;
+    color: var(--p);
+  }
+  .brand-sub {
+    font-size: 10.5px;
+    letter-spacing: 0.24em;
+    text-transform: uppercase;
+    color: var(--mu);
+    margin-top: 2px;
+  }
+
+  .tg-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 7px 14px;
+    border: 1px solid var(--line);
+    border-radius: 999px;
+    background: var(--soft);
+    font-size: 12.5px;
+    color: var(--ink);
+    cursor: pointer;
+    transition: 0.2s;
+  }
+  .tg-pill:hover { border-color: var(--p); }
+  .dot {
+    width: 8px; height: 8px; border-radius: 50%;
+    background: var(--a);
+  }
+  .dot.connected { background: var(--ok); }
+
+  /* Hero */
+  .hero {
+    text-align: center;
+    padding: 28px 0 22px;
+  }
+  .eyebrow {
+    font-size: 11px;
+    letter-spacing: 0.3em;
+    text-transform: uppercase;
+    color: var(--at);
+    font-weight: 600;
+  }
+  .hero h1 {
+    font: italic 600 clamp(28px, 5vw, 44px)/1.15 'Playfair Display', serif;
+    color: var(--p);
+    margin: 10px auto 12px;
+    max-width: 22ch;
+  }
+  .hero p {
+    color: var(--mu);
+    max-width: 58ch;
+    margin: 0 auto 14px;
+    font-size: 15px;
+  }
+  .dv { display: block; margin: 14px auto 0; }
+
+  /* Сетка */
+  .grid {
+    display: grid;
+    grid-template-columns: 1fr 1.15fr;
+    gap: 24px;
+    margin-top: 22px;
+    align-items: start;
+  }
+  @media (max-width: 860px) {
+    .grid { grid-template-columns: 1fr; }
+  }
+
+  .card {
+    border: 1px solid var(--line);
+    border-radius: 4px;
+    padding: 22px;
+    background: var(--bg);
+  }
+  .card-soft {
+    background: var(--soft);
+  }
+
+  .card-h {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    gap: 10px;
+    margin-bottom: 14px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid var(--line);
+  }
+  .card-h h2 {
+    margin: 0;
+    font: italic 600 22px/1.2 'Playfair Display', serif;
+    color: var(--p);
+  }
+  .step-tag {
+    font-size: 11px;
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
+    color: var(--at);
+    font-weight: 600;
+  }
+
+  label {
+    display: block;
+    font-size: 12.5px;
+    font-weight: 600;
+    color: var(--ink);
+    margin: 12px 0 5px;
+  }
+  input[type="text"], input[type="password"], input[type="number"], select, textarea {
+    width: 100%;
+    padding: 10px 12px;
+    border: 1px solid rgba(123, 75, 42, 0.35);
+    border-radius: 3px;
+    font: inherit;
+    color: var(--ink);
+    background: #fff;
+    outline: none;
+    transition: border-color 0.2s;
+  }
+  input:focus, select:focus, textarea:focus {
+    border-color: var(--p);
+  }
+
+  .row2 {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+  }
+
+  .range-wrap {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+  input[type="range"] {
+    flex: 1;
+    accent-color: var(--p);
+  }
+  .badge-val {
+    min-width: 72px;
+    text-align: center;
+    padding: 5px 8px;
+    background: var(--soft);
+    border: 1px solid var(--line);
+    border-radius: 3px;
+    font-weight: 600;
+    font-size: 13px;
+    color: var(--p);
+  }
+
+  /* Темы */
+  .topic-add {
+    display: grid;
+    grid-template-columns: 1fr 126px auto;
+    gap: 8px;
+    margin-top: 6px;
+  }
+  @media (max-width: 520px) {
+    .topic-add { grid-template-columns: 1fr; }
+  }
+
+  .topic-list {
+    list-style: none;
+    padding: 0;
+    margin: 12px 0 0;
+    display: flex;
+    flex-direction: column;
+    gap: 7px;
+  }
+  .topic-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 11px;
+    background: var(--soft);
+    border: 1px solid var(--line);
+    border-radius: 3px;
+    font-size: 13.5px;
+  }
+  .diff {
+    font-size: 11px;
+    padding: 2px 8px;
+    border-radius: 999px;
+    font-weight: 600;
+    background: #fff;
+    border: 1px solid var(--line);
+    color: var(--at);
+  }
+  .del-btn {
+    border: none;
+    background: none;
+    color: var(--mu);
+    cursor: pointer;
+    font-size: 16px;
+    padding: 0 4px;
+  }
+  .del-btn:hover { color: var(--p); }
+
+  /* Кнопки */
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    background: var(--p);
+    color: #fff;
+    border: 1px solid var(--p);
+    padding: 11px 20px;
+    border-radius: 3px;
+    font: 500 14px/1 'Inter', sans-serif;
+    letter-spacing: 0.04em;
+    cursor: pointer;
+    transition: 0.2s;
+  }
+  .btn:hover { background: var(--d); border-color: var(--d); }
+  .btn:disabled { opacity: 0.6; cursor: not-allowed; }
+
+  .btn-outline {
+    background: transparent;
+    color: var(--p);
+  }
+  .btn-outline:hover {
+    background: var(--soft);
+    color: var(--d);
+    border-color: var(--p);
+  }
+
+  .btn-gold {
+    background: var(--d);
+    border-color: var(--a);
+    color: #fff;
+  }
+  .btn-gold:hover {
+    background: var(--p);
+  }
+
+  .actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-top: 18px;
+  }
+
+  /* План и чек-лист */
+  .alert {
+    padding: 11px 14px;
+    border-left: 3px solid var(--a);
+    background: var(--soft);
+    font-size: 13.5px;
+    margin-bottom: 14px;
+    border-radius: 0 3px 3px 0;
+  }
+  .alert.warn {
+    border-left-color: var(--warn);
+    background: #FDF5EE;
+  }
+
+  .progress-box {
+    margin: 12px 0 16px;
+  }
+  .progress-top {
+    display: flex;
+    justify-content: space-between;
+    font-size: 12.5px;
+    color: var(--mu);
+    margin-bottom: 5px;
+  }
+  .bar {
+    height: 8px;
+    background: #EDE4DA;
+    border-radius: 999px;
+    overflow: hidden;
+  }
+  .bar > i {
+    display: block;
+    height: 100%;
+    background: linear-gradient(90deg, var(--p), var(--a));
+    width: 0%;
+    transition: width 0.3s ease;
+  }
+
+  .day-card {
+    border: 1px solid var(--line);
+    border-radius: 3px;
+    padding: 12px 14px;
+    margin-bottom: 10px;
+    background: #fff;
+  }
+  .day-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 8px;
+  }
+  .day-head b {
+    font: italic 600 17px/1.2 'Playfair Display', serif;
+    color: var(--p);
+  }
+  .day-head span {
+    font-size: 12px;
+    color: var(--at);
+    font-weight: 600;
+  }
+
+  .task-row {
+    display: flex;
+    align-items: flex-start;
+    gap: 9px;
+    padding: 5px 0;
+    font-size: 13.5px;
+    cursor: pointer;
+  }
+  .task-row input { margin-top: 3px; accent-color: var(--p); }
+  .task-row.done span { text-decoration: line-through; color: var(--mu); }
+
+  .tag-phase {
+    display: inline-block;
+    font-size: 10.5px;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    padding: 1px 6px;
+    border-radius: 2px;
+    background: var(--soft);
+    border: 1px solid var(--line);
+    color: var(--p);
+    margin-right: 5px;
+    font-weight: 600;
+  }
+
+  /* Блок Telegram и ИИ-логики */
+  .tg-box {
+    margin-top: 18px;
+    padding: 16px;
+    border: 1px dashed var(--p);
+    background: var(--soft);
+    border-radius: 4px;
+  }
+  .tg-box h3 {
+    margin: 0 0 6px;
+    font: italic 600 18px/1.2 'Playfair Display', serif;
+    color: var(--p);
+  }
+  .tg-status {
+    font-size: 13px;
+    margin-top: 8px;
+    color: var(--mu);
+  }
+
+  details.tg-settings {
+    margin-top: 10px;
+    font-size: 13px;
+  }
+  details.tg-settings summary {
+    cursor: pointer;
+    color: var(--at);
+    font-weight: 600;
+  }
+
+  .ft {
+    text-align: center;
+    color: var(--mu);
+    font-size: 12.5px;
+    margin-top: 34px;
+    padding-top: 16px;
+    border-top: 1px solid var(--line);
+  }
+</style>
+</head>
+<body>
+
+<div class="sheet">
+  <div class="strip" id="topStrip"></div>
+  <div class="frame">
+    <div class="topbar">
+      <div class="brand">
+        <div id="brandLogo"></div>
+        <div>
+          <div class="brand-title">Sevinch Fatilloyeva</div>
+          <div class="brand-sub">AI Study &amp; Focus Planner</div>
+        </div>
+      </div>
+      <button type="button" class="tg-pill" id="tgStatusBtn" title="Настройки интеграции с Telegram-ботом">
+        <span class="dot" id="tgDot"></span>
+        <span id="tgPillText">Telegram-бот: не подключён</span>
+      </button>
+    </div>
+
+    <div class="hero">
+      <div class="eyebrow">Интеллектуальный помощник подготовки</div>
+      <h1>Умный планировщик учёбы, экзаменов и ключевых встреч</h1>
+      <p>Введите цель, список тем и доступное время — система распределит нагрузку по циклу «теория → практика → отдых», сформирует чек-лист самопроверки и отправит результат в Telegram-бот.</p>
+      <svg class="dv" id="heroDivider" width="160" height="14" viewBox="0 0 160 14"></svg>
+    </div>
+
+    <div class="grid">
+      <!-- Левая колонка: ввод данных -->
+      <div class="card">
+        <div class="card-h">
+          <h2>Параметры подготовки</h2>
+          <span class="step-tag">Шаг I</span>
+        </div>
+
+        <div class="row2">
+          <div>
+            <label for="userName">Ваше имя</label>
+            <input type="text" id="userName" placeholder="Например: Севинч">
+          </div>
+          <div>
+            <label for="goalTitle">Цель / экзамен / встреча</label>
+            <input type="text" id="goalTitle" placeholder="Защита проекта / IELTS / Экзамен">
+          </div>
+        </div>
+
+        <div class="row2">
+          <div>
+            <label for="daysCount">Дней на подготовку</label>
+            <input type="number" id="daysCount" min="1" max="30" value="4">
+          </div>
+          <div>
+            <label for="paceMode">Режим баланса</label>
+            <select id="paceMode">
+              <option value="balanced">Баланс: теория + практика + отдых</option>
+              <option value="practice">Фокус на практику и кейсы</option>
+              <option value="review">Интенсивное повторение</option>
+            </select>
+          </div>
+        </div>
+
+        <label for="hoursPerDay">Свободных часов в день</label>
+        <div class="range-wrap">
+          <input type="range" id="hoursPerDay" min="1" max="8" step="0.5" value="2.5">
+          <span class="badge-val" id="hoursLabel">2.5 ч/день</span>
+        </div>
+
+        <label>Темы для изучения или подготовки</label>
+        <div class="topic-add">
+          <input type="text" id="topicInput" placeholder="Новая тема (например: Анализ данных)">
+          <select id="topicDiff">
+            <option value="easy">Лёгкая (1.5 ч)</option>
+            <option value="medium" selected>Средняя (2.5 ч)</option>
+            <option value="hard">Сложная (4 ч)</option>
+          </select>
+          <button type="button" class="btn btn-outline" id="addTopicBtn">+ Добавить</button>
+        </div>
+
+        <ul class="topic-list" id="topicList"></ul>
+
+        <div class="actions">
+          <button type="button" class="btn" id="generateBtn">Сформировать ИИ-план</button>
+          <button type="button" class="btn btn-outline" id="demoBtn">Заполнить пример</button>
+        </div>
+
+        <!-- Подключение Telegram-бота -->
+        <div class="tg-box" id="tgSection">
+          <h3>Связь с Telegram-ботом</h3>
+          <div style="font-size: 13px; color: var(--mu);">
+            После генерации плана и отметки чек-листа отправьте готовый отчёт в Telegram-бот.
+          </div>
+
+          <details class="tg-settings" id="tgDetails">
+            <summary>Настроить токен бота и Chat ID</summary>
+            <label for="tgToken">Bot Token (от @BotFather)</label>
+            <input type="password" id="tgToken" placeholder="123456789:AAH...">
+            <label for="tgChatId">Chat ID получателя (ваш или руководителя)</label>
+            <input type="text" id="tgChatId" placeholder="Например: 987654321">
+            <div class="actions" style="margin-top: 10px;">
+              <button type="button" class="btn btn-outline" id="saveTgBtn">Сохранить настройки</button>
+              <button type="button" class="btn btn-outline" id="testTgBtn">Проверить связь</button>
+            </div>
+          </details>
+        </div>
+      </div>
+
+      <!-- Правая колонка: результат + чек-лист + отправка в TG -->
+      <div class="card card-soft">
+        <div class="card-h">
+          <h2>План и чек-лист самопроверки</h2>
+          <span class="step-tag">Шаг II</span>
+        </div>
+
+        <div id="loadAlert" class="alert">
+          Добавьте темы слева и нажмите <b>«Сформировать ИИ-план»</b>, чтобы получить пошаговое расписание.
+        </div>
+
+        <div class="progress-box">
+          <div class="progress-top">
+            <span>Прогресс выполнения и самопроверки</span>
+            <b id="progressText">0% (0 / 0)</b>
+          </div>
+          <div class="bar"><i id="progressBar"></i></div>
+        </div>
+
+        <div id="planContainer"></div>
+
+        <div id="checklistWrapper" style="display:none; margin-top: 18px;">
+          <div class="card-h" style="margin-bottom: 10px;">
+            <h2 style="font-size: 19px;">Чек-лист самопроверки перед сдачей</h2>
+            <span class="step-tag">Контроль</span>
+          </div>
+          <div id="checklistContainer"></div>
+        </div>
+
+        <div class="actions" style="margin-top: 18px;">
+          <button type="button" class="btn btn-gold" id="sendTgBtn" disabled>
+            Отправить отчёт в Telegram-бот
+          </button>
+          <button type="button" class="btn btn-outline" id="copyReportBtn" disabled>
+            Скопировать текст отчёта
+          </button>
+        </div>
+        <div class="tg-status" id="sendStatus"></div>
+      </div>
+    </div>
+
+    <div class="ft">
+      Дизайн-система: Рассет · Эспрессо · Золото · Бухарская геометрия — Sevinch Fatilloyeva
+    </div>
+  </div>
+</div>
+
+<script>
+  // Фирменные цвета и графика из брендбука
+  const PALETTE = { P: '#7B4B2A', D: '#3F2412', A: '#E0A94A', BG: '#FFFFFF' };
+
+  function starEmblem(fg, ln, bg) {
+    return `<svg viewBox="0 0 100 100" aria-hidden="true">
+      ${bg ? `<circle cx="50" cy="50" r="50" fill="${bg}"/>` : ''}
+      <g transform="translate(50 50) scale(1.18) translate(-50 -50)">
+        <rect x="30" y="30" width="40" height="40" rx="3" fill="${fg}" stroke="${fg}" stroke-width="3" stroke-linejoin="round"/>
+        <rect x="30" y="30" width="40" height="40" rx="3" fill="${fg}" stroke="${fg}" stroke-width="3" stroke-linejoin="round" transform="rotate(45 50 50)"/>
+        <circle cx="50" cy="50" r="12" fill="${ln}"/>
+        <circle cx="50" cy="50" r="4" fill="${fg}"/>
+      </g>
+    </svg>`;
+  }
+
+  function girihPattern(id, strokeColor, bgColor, op) {
+    return `<svg aria-hidden="true">
+      <defs>
+        <pattern id="${id}" width="60" height="60" patternUnits="userSpaceOnUse">
+          <g fill="none" stroke="${strokeColor}" stroke-width="1.2">
+            <rect x="21" y="21" width="18" height="18"/>
+            <rect x="21" y="21" width="18" height="18" transform="rotate(45 30 30)"/>
+          </g>
+          <circle cx="30" cy="30" r="2" fill="${strokeColor}"/>
+        </pattern>
+      </defs>
+      <rect width="100%" height="100%" fill="${bgColor}"/>
+      <rect width="100%" height="100%" fill="url(#${id})" opacity="${op}"/>
+    </svg>`;
+  }
+
+  document.getElementById('topStrip').innerHTML = girihPattern('stripPat', PALETTE.A, PALETTE.D, 0.72);
+  document.getElementById('brandLogo').innerHTML = starEmblem(PALETTE.BG, PALETTE.P, PALETTE.P);
+  document.getElementById('heroDivider').innerHTML = `
+    <path d="M0 7H66M94 7H160" stroke="${PALETTE.P}" stroke-width="1"/>
+    <path d="M80 1L86 7L80 13L74 7Z" fill="${PALETTE.A}" stroke="${PALETTE.P}" stroke-width="1"/>
+  `;
+
+  // Состояние приложения
+  const DIFF_INFO = {
+    easy: { label: 'Лёгкая', hours: 1.5 },
+    medium: { label: 'Средняя', hours: 2.5 },
+    hard: { label: 'Сложная', hours: 4.0 }
+  };
+
+  let topics = [
+    { name: 'Структура и ключевые понятия темы', diff: 'easy' },
+    { name: 'Практический разбор кейсов и расчётов', diff: 'hard' },
+    { name: 'Подготовка ответов на сложные вопросы', diff: 'medium' }
+  ];
+
+  let generatedPlan = [];
+  let checklistItems = [];
+
+  // Элементы DOM
+  const topicListEl = document.getElementById('topicList');
+  const hoursInput = document.getElementById('hoursPerDay');
+  const hoursLabel = document.getElementById('hoursLabel');
+
+  hoursInput.addEventListener('input', () => {
+    hoursLabel.textContent = `${hoursInput.value} ч/день`;
+  });
+
+  function renderTopics() {
+    topicListEl.innerHTML = '';
+    topics.forEach((t, idx) => {
+      const li = document.createElement('li');
+      li.className = 'topic-item';
+      li.innerHTML = `
+        <span>${escapeHtml(t.name)}</span>
+        <span style="display:flex;align-items:center;gap:6px;">
+          <span class="diff">${DIFF_INFO[t.diff].label} · ${DIFF_INFO[t.diff].hours} ч</span>
+          <button type="button" class="del-btn" data-idx="${idx}" title="Удалить">×</button>
+        </span>
+      `;
+      topicListEl.appendChild(li);
+    });
+  }
+
+  topicListEl.addEventListener('click', (e) => {
+    const btn = e.target.closest('.del-btn');
+    if (!btn) return;
+    topics.splice(Number(btn.dataset.idx), 1);
+    renderTopics();
+  });
+
+  document.getElementById('addTopicBtn').addEventListener('click', () => {
+    const input = document.getElementById('topicInput');
+    const val = input.value.trim();
+    if (!val) return;
+    topics.push({ name: val, diff: document.getElementById('topicDiff').value });
+    input.value = '';
+    renderTopics();
+  });
+
+  document.getElementById('topicInput').addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      document.getElementById('addTopicBtn').click();
+    }
+  });
+
+  document.getElementById('demoBtn').addEventListener('click', () => {
+    document.getElementById('userName').value = 'Севинч Фатиллоева';
+    document.getElementById('goalTitle').value = 'Итоговая защита ИИ-проекта в Registan LC';
+    document.getElementById('daysCount').value = 4;
+    hoursInput.value = 2.5;
+    hoursLabel.textContent = '2.5 ч/день';
+    topics = [
+      { name: 'Сбор и структурирование материалов проекта', diff: 'easy' },
+      { name: 'Настройка ИИ-промптов и проверка логики ответов', diff: 'hard' },
+      { name: 'Тестирование интеграции с Telegram-ботом', diff: 'medium' },
+      { name: 'Репетиция 3-минутной презентации и ответы на вопросы', diff: 'medium' }
+    ];
+    renderTopics();
+    buildPlan();
+  });
+
+  // Генерация плана с балансом теории, практики и отдыха
+  function buildPlan() {
+    if (!topics.length) {
+      alert('Добавьте хотя бы одну тему для планирования.');
+      return;
+    }
+
+    const days = Math.max(1, Math.min(30, Number(document.getElementById('daysCount').value) || 3));
+    const hoursPerDay = Number(hoursInput.value) || 2;
+    const pace = document.getElementById('paceMode').value;
+
+    const totalNeeded = topics.reduce((sum, t) => sum + DIFF_INFO[t.diff].hours, 0);
+    const totalAvailable = days * hoursPerDay;
+
+    const loadAlert = document.getElementById('loadAlert');
+    if (totalNeeded > totalAvailable) {
+      loadAlert.className = 'alert warn';
+      loadAlert.innerHTML = `<b>Внимание на нагрузку:</b> на выбранные темы нужно ~<b>${totalNeeded.toFixed(1)} ч</b>, а доступно <b>${totalAvailable.toFixed(1)} ч</b>. План сжат: добавьте ещё 1–2 дня или увеличьте время в день на 0.5–1 ч.`;
+    } else {
+      loadAlert.className = 'alert';
+      loadAlert.innerHTML = `<b>Оптимальный темп:</b> требуется ~<b>${totalNeeded.toFixed(1)} ч</b> из <b>${totalAvailable.toFixed(1)} ч</b> доступных. В расписание включены блоки практики и короткого отдыха.`;
+    }
+
+    // Разбиваем каждую тему на микро-шаги: Теория -> Практика -> Закрепление
+    const ratio = pace === 'practice' ? [0.3, 0.55, 0.15] : pace === 'review' ? [0.25, 0.35, 0.4] : [0.4, 0.4, 0.2];
+    const blocks = [];
+
+    topics.forEach((t) => {
+      const h = DIFF_INFO[t.diff].hours;
+      blocks.push({ phase: 'Теория', text: `Изучить основу: «${t.name}»`, hrs: +(h * ratio[0]).toFixed(1) });
+      blocks.push({ phase: 'Практика', text: `Выполнить разбор / кейс по теме «${t.name}»`, hrs: +(h * ratio[1]).toFixed(1) });
+      blocks.push({ phase: 'Повторение', text: `Краткий конспект и самопроверка: «${t.name}»`, hrs: +(h * ratio[2]).toFixed(1) });
+    });
+
+    // Распределяем по дням
+    generatedPlan = Array.from({ length: days }, (_, i) => ({
+      day: i + 1,
+      tasks: []
+    }));
+
+    blocks.forEach((b, idx) => {
+      const targetDay = Math.min(days - 1, Math.floor((idx / blocks.length) * days));
+      generatedPlan[targetDay].tasks.push({ ...b, done: false });
+    });
+
+    generatedPlan.forEach((d) => {
+      d.tasks.push({
+        phase: 'Отдых',
+        text: 'Перерыв без экранов 15–20 мин для закрепления памяти',
+        hrs: 0.3,
+        done: false
+      });
+    });
+
+    // Формируем чек-лист самопроверки
+    checklistItems = topics.map((t) => ({
+      text: `Могу объяснить своими словами и привести пример по теме «${t.name}»`,
+      done: false
+    }));
+    checklistItems.push({
+      text: 'Проверил(а) себя по контрольным вопросам без подглядывания в конспект',
+      done: false
+    });
+
+    renderPlanAndChecklist();
+    document.getElementById('sendTgBtn').disabled = false;
+    document.getElementById('copyReportBtn').disabled = false;
+  }
+
+  function renderPlanAndChecklist() {
+    const planContainer = document.getElementById('planContainer');
+    planContainer.innerHTML = '';
+
+    generatedPlan.forEach((d, dIdx) => {
+      const totalDayHrs = d.tasks.reduce((s, t) => s + t.hrs, 0).toFixed(1);
+      const card = document.createElement('div');
+      card.className = 'day-card';
+      card.innerHTML = `
+        <div class="day-head">
+          <b>День ${d.day}</b>
+          <span>~${totalDayHrs} ч</span>
+        </div>
+        ${d.tasks.map((task, tIdx) => `
+          <label class="task-row ${task.done ? 'done' : ''}">
+            <input type="checkbox" data-type="plan" data-day="${dIdx}" data-task="${tIdx}" ${task.done ? 'checked' : ''}>
+            <span><i class="tag-phase">${task.phase}</i>${escapeHtml(task.text)} (${task.hrs} ч)</span>
+          </label>
+        `).join('')}
+      `;
+      planContainer.appendChild(card);
+    });
+
+    const checklistWrapper = document.getElementById('checklistWrapper');
+    const checklistContainer = document.getElementById('checklistContainer');
+    checklistWrapper.style.display = 'block';
+    checklistContainer.innerHTML = checklistItems.map((item, idx) => `
+      <label class="task-row ${item.done ? 'done' : ''}">
+        <input type="checkbox" data-type="check" data-idx="${idx}" ${item.done ? 'checked' : ''}>
+        <span>${escapeHtml(item.text)}</span>
+      </label>
+    `).join('');
+
+    updateProgress();
+  }
+
+  document.addEventListener('change', (e) => {
+    const cb = e.target;
+    if (cb.dataset.type === 'plan') {
+      const d = Number(cb.dataset.day);
+      const t = Number(cb.dataset.task);
+      generatedPlan[d].tasks[t].done = cb.checked;
+      renderPlanAndChecklist();
+    } else if (cb.dataset.type === 'check') {
+      const i = Number(cb.dataset.idx);
+      checklistItems[i].done = cb.checked;
+      renderPlanAndChecklist();
+    }
+  });
+
+  function getProgressStats() {
+    let total = 0, done = 0;
+    generatedPlan.forEach(d => d.tasks.forEach(t => { total++; if (t.done) done++; }));
+    checklistItems.forEach(c => { total++; if (c.done) done++; });
+    const pct = total ? Math.round((done / total) * 100) : 0;
+    return { total, done, pct };
+  }
+
+  function updateProgress() {
+    const { total, done, pct } = getProgressStats();
+    document.getElementById('progressText').textContent = `${pct}% (${done} / ${total})`;
+    document.getElementById('progressBar').style.width = `${pct}%`;
+  }
+
+  document.getElementById('generateBtn').addEventListener('click', buildPlan);
+
+  // --- Интеграция с Telegram-ботом ---
+  const STORAGE_KEY = 'sf_planner_tg_cfg';
+
+  function loadTgConfig() {
+    const params = new URLSearchParams(window.location.search);
+    const urlToken = params.get('token');
+    const urlChat = params.get('chat');
+    if (urlToken && urlChat) {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify({ token: urlToken, chatId: urlChat }));
+    }
+    try {
+      return JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}');
+    } catch {
+      return {};
+    }
+  }
+
+  function refreshTgBadge() {
+    const cfg = loadTgConfig();
+    const dot = document.getElementById('tgDot');
+    const text = document.getElementById('tgPillText');
+    document.getElementById('tgToken').value = cfg.token || '';
+    document.getElementById('tgChatId').value = cfg.chatId || '';
+
+    if (cfg.token && cfg.chatId) {
+      dot.classList.add('connected');
+      text.textContent = `Telegram-бот подключён (ID: ${cfg.chatId})`;
+    } else {
+      dot.classList.remove('connected');
+      text.textContent = 'Telegram-бот: настройте токен';
+    }
+  }
+
+  document.getElementById('tgStatusBtn').addEventListener('click', () => {
+    const details = document.getElementById('tgDetails');
+    details.open = !details.open;
+    details.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  });
+
+  document.getElementById('saveTgBtn').addEventListener('click', () => {
+    const token = document.getElementById('tgToken').value.trim();
+    const chatId = document.getElementById('tgChatId').value.trim();
+    localStorage.setItem(STORAGE_KEY, JSON.stringify({ token, chatId }));
+    refreshTgBadge();
+    document.getElementById('sendStatus').textContent = 'Настройки Telegram сохранены в браузере.';
+  });
+
+  async function sendTelegramMessage(text) {
+    const { token, chatId } = loadTgConfig();
+    if (!token || !chatId) {
+      document.getElementById('tgDetails').open = true;
+      throw new Error('Укажите Bot Token и Chat ID в настройках Telegram.');
+    }
+
+    const res = await fetch(`https://api.telegram.org/bot${encodeURIComponent(token)}/sendMessage`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        chat_id: chatId,
+        text: text,
+        parse_mode: 'HTML'
+      })
+    });
+
+    const data = await res.json();
+    if (!data.ok) {
+      throw new Error(data.description || 'Ошибка Telegram API');
+    }
+    return data;
+  }
+
+  document.getElementById('testTgBtn').addEventListener('click', async () => {
+    const statusEl = document.getElementById('sendStatus');
+    statusEl.textContent = 'Отправка тестового сообщения...';
+    try {
+      await sendTelegramMessage('✅ <b>Связь установлена!</b>\nУмный планировщик подготовки успешно подключён к Telegram-боту.');
+      statusEl.style.color = 'var(--ok)';
+      statusEl.textContent = 'Тестовое сообщение успешно доставлено в Telegram!';
+    } catch (err) {
+      statusEl.style.color = 'var(--warn)';
+      statusEl.textContent = `Ошибка: ${err.message}`;
+    }
+  });
+
+  function formatReportHtml() {
+    const user = escapeHtml(document.getElementById('userName').value.trim() || 'Участник');
+    const goal = escapeHtml(document.getElementById('goalTitle').value.trim() || 'Подготовка к задаче');
+    const days = document.getElementById('daysCount').value;
+    const hrs = hoursInput.value;
+    const { done, total, pct } = getProgressStats();
+
+    const topicLines = topics.map((t, i) => `${i + 1}. ${escapeHtml(t.name)} (${DIFF_INFO[t.diff].label})`).join('\n');
+    const dayLines = generatedPlan.map(d => {
+      const doneInDay = d.tasks.filter(t => t.done).length;
+      return `• <b>День ${d.day}:</b> выполнено ${doneInDay} из ${d.tasks.length} шагов`;
+    }).join('\n');
+
+    return [
+      `🎓 <b>Отчёт из Умного планировщика подготовки</b>`,
+      ``,
+      `👤 <b>Пользователь:</b> ${user}`,
+      `🎯 <b>Цель:</b> ${goal}`,
+      `⏳ <b>График:</b> ${days} дн. по ${hrs} ч/день`,
+      `📊 <b>Текущий прогресс:</b> ${pct}% (${done}/${total} пунктов)`,
+      ``,
+      `📚 <b>Темы:</b>`,
+      topicLines,
+      ``,
+      `🗓 <b>Сводка по дням:</b>`,
+      dayLines
+    ].join('\n');
+  }
+
+  document.getElementById('sendTgBtn').addEventListener('click', async () => {
+    const btn = document.getElementById('sendTgBtn');
+    const statusEl = document.getElementById('sendStatus');
+    btn.disabled = true;
+    statusEl.style.color = 'var(--mu)';
+    statusEl.textContent = 'Отправляем отчёт в Telegram...';
+
+    try {
+      await sendTelegramMessage(formatReportHtml());
+      statusEl.style.color = 'var(--ok)';
+      statusEl.textContent = 'Готово! Уведомление с результатами отправлено в Telegram-бот.';
+    } catch (err) {
+      statusEl.style.color = 'var(--warn)';
+      statusEl.textContent = `Не удалось отправить: ${err.message}`;
+    } finally {
+      btn.disabled = false;
+    }
+  });
+
+  document.getElementById('copyReportBtn').addEventListener('click', async () => {
+    const plain = formatReportHtml().replace(/<[^>]+>/g, '');
+    await navigator.clipboard.writeText(plain);
+    document.getElementById('sendStatus').textContent = 'Текст отчёта скопирован в буфер обмена.';
+  });
+
+  function escapeHtml(str) {
+    return str.replace(/[&<>"']/g, m => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[m]));
+  }
+
+  renderTopics();
+  refreshTgBadge();
+</script>
+</body>
+</html>
